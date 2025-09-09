@@ -3,31 +3,37 @@ import { prisma } from "@/lib/db";
 
 export async function GET(
   req: Request,
-  { params }: { params: { id: string } }
+  context: { params: { id: string } }
 ) {
+  const { id } = context.params;
+
   const contact = await prisma.contact.findUnique({
-    where: { id: params.id },
+    where: { id },
   });
   return NextResponse.json(contact);
 }
 
 export async function DELETE(
   req: Request,
-  { params }: { params: { id: string } }
+  context: { params: { id: string } }
 ) {
+  const { id } = context.params;
+
   await prisma.contact.delete({
-    where: { id: params.id },
+    where: { id },
   });
   return NextResponse.json({ success: true });
 }
 
 export async function PUT(
   req: Request,
-  { params }: { params: { id: string } }
+  context: { params: { id: string } }
 ) {
+  const { id } = context.params;
   const body = await req.json();
+
   const updated = await prisma.contact.update({
-    where: { id: params.id },
+    where: { id },
     data: {
       name: body.name,
       email: body.email,
@@ -36,5 +42,6 @@ export async function PUT(
       notes: body.notes,
     },
   });
+
   return NextResponse.json(updated);
 }
