@@ -3,9 +3,9 @@ import { prisma } from "@/lib/db";
 
 export async function GET(
   req: Request,
-  context: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
-  const { id } = context.params;
+  const { id } = await context.params;
 
   const contact = await prisma.contact.findUnique({
     where: { id },
@@ -15,9 +15,9 @@ export async function GET(
 
 export async function DELETE(
   req: Request,
-  context: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
-  const { id } = context.params;
+  const { id } = await context.params;
 
   await prisma.contact.delete({
     where: { id },
@@ -27,9 +27,9 @@ export async function DELETE(
 
 export async function PUT(
   req: Request,
-  context: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
-  const { id } = context.params;
+  const { id } = await context.params;
   const body = await req.json();
 
   const updated = await prisma.contact.update({
