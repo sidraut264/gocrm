@@ -8,20 +8,98 @@ datasource db {
 }
 
 model User {
-  id       String   @id @default(auto()) @map("_id") @db.ObjectId
-  name     String?
-  email    String   @unique
-  password String   // store hashed password
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  name      String?
+  email     String?  @unique
+  password  String?  // if not using OAuth only
   createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  leads     Lead[]
+  contacts  Contact[]
+  deals     Deal[]
+  activities ActivityLog[]
+}
+
+model Lead {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  name      String
+  email     String?  @unique
+  phone     String?
+  source    String?
+  status    String   @default("new") // new, contacted, qualified, disqualified
+  notes     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  userId    String   @db.ObjectId
+  user      User     @relation(fields: [userId], references: [id])
+
+  contact   Contact?
 }
 
 model Contact {
   id        String   @id @default(auto()) @map("_id") @db.ObjectId
   name      String
-  email     String   @unique
+  email     String?
   phone     String?
-  status    String   @default("Lead") // "Lead" | "Customer"
+  company   String?
   notes     String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  userId    String   @db.ObjectId
+  user      User     @relation(fields: [userId], references: [id])
+
+  leadId    String?   @unique @db.ObjectId
+  lead      Lead?     @relation(fields: [leadId], references: [id])
+
+  deals     Deal[]
+  activities ActivityLog[]
 }
+
+
+model Deal {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  title     String
+  value     Float
+  status    String   @default("open") // open, won, lost
+  stageId   String   @db.ObjectId
+  stage     PipelineStage @relation(fields: [stageId], references: [id])
+  closeDate DateTime?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  userId    String   @db.ObjectId
+  user      User     @relation(fields: [userId], references: [id])
+
+  contactId String   @db.ObjectId
+  contact   Contact  @relation(fields: [contactId], references: [id])
+  activities ActivityLog[]
+}
+
+model PipelineStage {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  name      String
+  order     Int
+  pipeline  String? // optional grouping if you want multiple pipelines
+
+  deals     Deal[]
+}
+
+model ActivityLog {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  type        String   // call, email, meeting, note
+  description String
+  createdAt   DateTime @default(now())
+
+  userId      String   @db.ObjectId
+  user        User     @relation(fields: [userId], references: [id])
+
+  dealId      String   @db.ObjectId
+  deal        Deal     @relation(fields: [dealId], references: [id])
+
+  contactId   String?  @db.ObjectId
+  contact     Contact? @relation(fields: [contactId], references: [id])
+}
+

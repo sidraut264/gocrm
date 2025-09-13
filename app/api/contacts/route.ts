@@ -2,7 +2,11 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 
 export async function GET() {
-  const contacts = await prisma.contact.findMany();
+  const contacts = await prisma.contact.findMany({
+    include: {
+      deals: true, // 👈 this ensures deals are fetched
+    },
+  });
   return NextResponse.json(contacts);
 }
 
