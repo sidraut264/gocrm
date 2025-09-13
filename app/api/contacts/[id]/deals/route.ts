@@ -3,8 +3,12 @@ import { prisma } from "@/lib/db";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 
-export async function POST(req: Request, { params }: { params: { id: string } }) {
+export async function POST(
+  req: Request,
+  context: { params: { id: string } } // <-- this is correct
+) {
   try {
+    const { params } = context; // get route params
     const session = await getServerSession(authOptions);
     if (!session?.user?.email) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -12,7 +16,6 @@ export async function POST(req: Request, { params }: { params: { id: string } })
 
     const { title, value, stageId, closeDate } = await req.json();
 
-    // get userId from session
     const user = await prisma.user.findUnique({
       where: { email: session.user.email },
       select: { id: true },
@@ -28,7 +31,7 @@ export async function POST(req: Request, { params }: { params: { id: string } })
         value: parseFloat(value),
         stageId,
         closeDate: closeDate ? new Date(closeDate) : null,
-        contactId: params.id,
+        contactId: params.id, // use params from context
         userId: user.id,
       },
     });
