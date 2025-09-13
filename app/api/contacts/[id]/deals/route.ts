@@ -3,12 +3,14 @@ import { prisma } from "@/lib/db";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 
-// Correct function signature for Next.js 13+ API routes
 export async function POST(
   req: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    // Await the params to get the actual values
+    const resolvedParams = await params;
+    
     const session = await getServerSession(authOptions);
     if (!session?.user?.email) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -31,7 +33,7 @@ export async function POST(
         value: parseFloat(value),
         stageId,
         closeDate: closeDate ? new Date(closeDate) : null,
-        contactId: params.id,
+        contactId: resolvedParams.id,
         userId: user.id,
       },
     });
