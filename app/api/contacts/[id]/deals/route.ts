@@ -5,10 +5,11 @@ import { authOptions } from "@/lib/auth";
 
 export async function POST(
   req: Request,
-  context: { params: { id: string } } // <-- this is correct
+  context: { params: { id: string } } // single context argument
 ) {
+  const { params } = context; // get id from params
+
   try {
-    const { params } = context; // get route params
     const session = await getServerSession(authOptions);
     if (!session?.user?.email) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -31,7 +32,7 @@ export async function POST(
         value: parseFloat(value),
         stageId,
         closeDate: closeDate ? new Date(closeDate) : null,
-        contactId: params.id, // use params from context
+        contactId: params.id,
         userId: user.id,
       },
     });
