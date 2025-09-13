@@ -3,12 +3,11 @@ import { prisma } from "@/lib/db";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 
+// Correct function signature for Next.js 13+ API routes
 export async function POST(
   req: Request,
-  context: { params: { id: string } } // single context argument
+  { params }: { params: { id: string } }
 ) {
-  const { params } = context; // get id from params
-
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user?.email) {
