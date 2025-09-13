@@ -6,52 +6,62 @@ import { authOptions } from "@/lib/auth";
 
 export async function POST(
   req: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
-  const session = await getServerSession(authOptions);
-  if (!session) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  try {
+    const session = await getServerSession(authOptions);
+    if (!session) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
 
-  const leadId = params.id;
+    // Await the params to get the actual values
+    const resolvedParams = await params;
+    const leadId = resolvedParams.id;
 
-  // find the lead
-  const lead = await prisma.lead.findUnique({
-    where: { id: leadId },
-  });
+    // find the lead
+    const lead = await prisma.lead.findUnique({
+      where: { id: leadId },
+    });
 
-  if (!lead) {
-    return NextResponse.json({ error: "Lead not found" }, { status: 404 });
-  }
+    if (!lead) {
+      return NextResponse.json({ error: "Lead not found" }, { status: 404 });
+    }
 
-  // check if this lead was already converted
-  const existingContact = await prisma.contact.findFirst({
-    where: { email: lead.email }, // or { leadId: leadId } if you store leadId in Contact
-  });
+    // check if this lead was already converted
+    const existingContact = await prisma.contact.findFirst({
+      where: { email: lead.email }, // or { leadId: leadId } if you store leadId in Contact
+    });
 
-  if (existingContact) {
+    if (existingContact) {
+      return NextResponse.json(
+        { error: "Lead already converted to contact" },
+        { status: 400 }
+      );
+    }
+
+    // create a contact from lead data
+    const contact = await prisma.contact.create({
+      data: {
+        name: lead.name,
+        email: lead.email,
+        phone: lead.phone,
+        userId: lead.userId,
+        leadId: lead.id, // if your Contact model has this relation
+      },
+    });
+
+    // Instead of deleting the lead, mark it as converted
+    await prisma.lead.update({
+      where: { id: leadId },
+      data: { status: "converted" },
+    });
+
+    return NextResponse.json({ message: "Lead converted", contact });
+  } catch (error) {
+    console.error("Error converting lead:", error);
     return NextResponse.json(
-      { error: "Lead already converted to contact" },
-      { status: 400 }
+      { error: "Failed to convert lead" },
+      { status: 500 }
     );
   }
-
-  // create a contact from lead data
-  const contact = await prisma.contact.create({
-    data: {
-      name: lead.name,
-      email: lead.email,
-      phone: lead.phone,
-      userId: lead.userId,
-      leadId: lead.id, // if your Contact model has this relation
-    },
-  });
-
-  // Instead of deleting the lead, mark it as converted
-  await prisma.lead.update({
-    where: { id: leadId },
-    data: { status: "converted" },
-  });
-
-  return NextResponse.json({ message: "Lead converted", contact });
 }
