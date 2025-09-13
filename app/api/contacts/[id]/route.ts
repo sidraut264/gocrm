@@ -32,15 +32,22 @@ export async function PUT(
   const { id } = await context.params;
   const body = await req.json();
 
+  // Create update data object conditionally
+  const updateData: any = {
+    name: body.name,
+    email: body.email,
+    phone: body.phone,
+    notes: body.notes,
+  };
+
+  // Only add status if it exists in the body
+  if (body.status !== undefined) {
+    updateData.status = body.status;
+  }
+
   const updated = await prisma.contact.update({
     where: { id },
-    data: {
-      name: body.name,
-      email: body.email,
-      phone: body.phone,
-      status: body.status,
-      notes: body.notes,
-    },
+    data: updateData,
   });
 
   return NextResponse.json(updated);
