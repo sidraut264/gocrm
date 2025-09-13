@@ -12,14 +12,23 @@ export async function GET() {
 
 export async function POST(req: Request) {
   const body = await req.json();
+  
+  // Create the data object conditionally
+  const data: any = {
+    name: body.name,
+    email: body.email,
+    phone: body.phone,
+    notes: body.notes,
+  };
+  
+  // Only add status if it exists in the request body
+  if (body.status !== undefined) {
+    data.status = body.status;
+  }
+  
   const contact = await prisma.contact.create({
-    data: {
-      name: body.name,
-      email: body.email,
-      phone: body.phone,
-      status: body.status || "Lead",
-      notes: body.notes,
-    },
+    data: data,
   });
+  
   return NextResponse.json(contact);
 }
